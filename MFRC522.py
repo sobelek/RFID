@@ -1,7 +1,5 @@
-# Modifications made by Simon Monk https://github.com/simonmonk/
+# Modifications made by Jakub Sobczak
 # Modified from: https://github.com/mxgxw/MFRC522-python/blob/master/MFRC522.py
-# Trace commented out and the Read and Write methods modified to return values.
-# Also changed to use the Broadcom pin mode
 
 import RPi.GPIO as GPIO
 import spi
