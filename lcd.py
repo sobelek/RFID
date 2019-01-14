@@ -12,6 +12,8 @@ import threading
 # Raspberry Pi pin configuration:
 
 btn1 = 16
+btn2 = 12
+btn3 = 1
 
 lcd_rs = digitalio.DigitalInOut(board.D26)
 lcd_en = digitalio.DigitalInOut(board.D19)
@@ -31,15 +33,32 @@ counter = False
 reader = SimpleMFRC522.SimpleMFRC522()
 
 
-def btn1_push():
+def btn_plus():
     global points_new
     global counter
     points_new +=1
     counter = True
+    lcd.clear()
+def btn_minus():
+    global points_new
+    global counter
+    points_new-=10
+    counter = True
 
-    
+def btn_reset():
+    global points_new
+    global counter
+    points_new = 0
+    counter = False
+
+
 button1 = gpiozero.Button(btn1)
-button1.when_released = btn1_push
+button2 = gpiozero.Button(btn2)
+button3 = gpiozero.Button(btn3)
+
+button1.when_released = btn_plus
+button2.when_released = btn_minus
+button3.when_released = btn_reset
 
 
 print("Connecting to Database")
@@ -79,15 +98,14 @@ try:
     lcd.clear()
     while True:
             lcd.message = "Przyloz Karte"
-            #id = reader.read_id_no_block()
             print("imalive")
-            if counter == True:
-                lcd.clear()
-                while True:
-                    lcd.message = "Points +{}".format(points_new)
-                    if id != (None, None):
-                        counter = False
-                        break
+            while counter == True:
+                lcd.message = "Points +{}".format(points_new)
+                if id != (None, None):
+                    cursor.execute("select points from Users where cardId='{}'".format(id))
+            
+                    counter = False
+                    break
             if id != (None, None):
                 cursor.execute("select points from Users where cardId='{}'".format(id))
                 points = cursor.fetchall()
