@@ -30,24 +30,31 @@ lcd = character_lcd.Character_LCD_Mono(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, l
 id = (None, None)
 points_new = 0
 counter = False
+cleared = False
 reader = SimpleMFRC522.SimpleMFRC522()
 
 
 def btn_plus():
     global points_new
     global counter
+    global cleared
+    cleared = False
     points_new +=1
     counter = True
 
 def btn_minus():
     global points_new
     global counter
+    global cleared
+    cleared = False
     points_new-=10
     counter = True
 
 def btn_reset():
     global points_new
     global counter
+    global cleared
+    cleared = False
     points_new = 0
     counter = False
 
@@ -87,7 +94,6 @@ class CardThread(threading.Thread):
         while True:
             global id
             id = reader.read_id()
-            print(id)
 
 
 thread1 = CardThread()
@@ -98,18 +104,30 @@ try:
     lcd.clear()
     while True:
             lcd.message = "Przyloz Karte"
-            print("imalive")
             while counter == True:
+                if cleared == False:
+                    lcd.clear()
+                    cleared = True
+                    
                 lcd.message = "Points +{}".format(points_new)
+                
                 if id != (None, None):
-                    cursor.execute("select points from Users where cardId='{}'".format(id))
-                    points = cursor.fetchall()
-                    points_new = points[0][0] + points_new
-                    cursor.execute("update Users set points = {} where cardId = {}".format(points_new, id))
-                    con.commit()
-                    counter = False
-                    points_new = 0
-                    break
+                    cursor.execute("select points,isActive from Users where cardId='{}'".format(id))
+                    points, active = cursor.fetchone()
+                    if active == 1:
+                        points_new = points + points_new
+                        cursor.execute("update Users set points = {} where cardId = {}".format(points_new, id))
+                        con.commit()
+                        counter = False
+                        points_new = 0
+                        break
+                    else:
+                        lcd.clear()
+                        lcd.message = "Card not Active"
+                        time.sleep(1.0)
+                        counter = False
+                        points_new = 0
+                        break
             if id != (None, None):
                 cursor.execute("select points from Users where cardId='{}'".format(id))
                 points = cursor.fetchall()
