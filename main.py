@@ -36,12 +36,12 @@ while config != 3:
         lcd = character_lcd.Character_LCD_Mono(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7, lcd_columns, lcd_rows, lcd_backlight)
         config += 1
     except:
-        pass
+        print("Error with lcd config")
     try:
         reader = SimpleMFRC522.SimpleMFRC522()
         config +=1
     except:
-        pass
+        print("Error with reader config")
     try:
         print("Connecting to Database")
         lcd.clear()
