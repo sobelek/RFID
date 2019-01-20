@@ -6,7 +6,6 @@ import mysql.connector as connector
 import board
 import digitalio
 import adafruit_character_lcd.character_lcd as character_lcd
-
 from mysql.connector import errorcode
 import threading
 # Raspberry Pi pin configuration:
@@ -14,6 +13,13 @@ import threading
 btn1 = 16
 btn2 = 12
 btn3 = 1
+
+config = 0
+id = (None, None)
+points_new = 0
+counter = False
+cleared = False
+
 
 lcd_rs = digitalio.DigitalInOut(board.D26)
 lcd_en = digitalio.DigitalInOut(board.D19)
@@ -24,15 +30,6 @@ lcd_d4 = digitalio.DigitalInOut(board.D13)
 lcd_backlight = digitalio.DigitalInOut(board.D2)
 lcd_columns = 16
 lcd_rows    = 2
-lcd = character_lcd.Character_LCD_Mono(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7, lcd_columns, lcd_rows, lcd_backlight)
-
-
-id = (None, None)
-points_new = 0
-counter = False
-cleared = False
-reader = SimpleMFRC522.SimpleMFRC522()
-
 
 def btn_plus():
     global points_new
@@ -58,6 +55,37 @@ def btn_reset():
     points_new = 0
     counter = False
 
+while config != 3:
+    config = 0
+    try:
+        lcd = character_lcd.Character_LCD_Mono(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7, lcd_columns, lcd_rows, lcd_backlight)
+        config += 1
+    except:
+        pass
+    try:
+        reader = SimpleMFRC522.SimpleMFRC522()
+        config +=1
+    except:
+        pass
+    try:
+        print("Connecting to Database")
+        lcd.clear()
+        lcd.message = "Connecting to \nDatabase" 
+        con = connector.connect(user='alicjamus_baza1', password='cQ2Qvg8U23', host='95.216.64.27', database='alicjamus_baza1')
+        cursor = con.cursor()
+        time.sleep(2.0)
+        config += 1
+    except connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print('Access denied')
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print('DB does not exist')
+        else:
+            print(err)
+    finally:
+        print('connected')
+
+
 
 button1 = gpiozero.Button(btn1)
 button2 = gpiozero.Button(btn2)
@@ -68,24 +96,6 @@ button2.when_released = btn_minus
 button3.when_released = btn_reset
 
 
-print("Connecting to Database")
-lcd.clear()
-lcd.message = "Connecting to \nDatabase" 
-
-
-try:
-    con = connector.connect(user='alicjamus_baza1', password='cQ2Qvg8U23', host='95.216.64.27', database='alicjamus_baza1')
-    cursor = con.cursor()
-    time.sleep(2.0)        
-except connector.Error as err:
-    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-        print('Access denied')
-    elif err.errno == errorcode.ER_BAD_DB_ERROR:
-        print('DB does not exist')
-    else:
-        print(err)
-finally:
-    print('connected')
 
 class CardThread(threading.Thread):
     def __init__(self):
@@ -116,11 +126,19 @@ try:
                     points, active = cursor.fetchone()
                     if active == 1:
                         points_new = points + points_new
-                        cursor.execute("update Users set points = {} where cardId = {}".format(points_new, id))
-                        con.commit()
-                        counter = False
-                        points_new = 0
-                        break
+                        if points_new < 0:
+                            lcd.message = "Za malo punktow\nna karcie"
+                            time.sleep(2.0)
+                            lcd.clear()
+                            counter = False
+                            points_new = 0
+                            break
+                        else:
+                            cursor.execute("update Users set points = {} where cardId = {}".format(points_new, id))
+                            con.commit()
+                            counter = False
+                            points_new = 0
+                            break
                     else:
                         lcd.clear()
                         lcd.message = "Card not Active"
