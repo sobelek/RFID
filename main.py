@@ -19,7 +19,7 @@ id = (None, None)
 points_new = 0
 counter = False
 cleared = False
-
+thread_alive = False
 
 lcd_rs = digitalio.DigitalInOut(board.D26)
 lcd_en = digitalio.DigitalInOut(board.D19)
@@ -30,31 +30,6 @@ lcd_d4 = digitalio.DigitalInOut(board.D13)
 lcd_backlight = digitalio.DigitalInOut(board.D2)
 lcd_columns = 16
 lcd_rows    = 2
-
-def btn_plus():
-    global points_new
-    global counter
-    global cleared
-    cleared = False
-    points_new +=1
-    counter = True
-
-def btn_minus():
-    global points_new
-    global counter
-    global cleared
-    cleared = False
-    points_new-=10
-    counter = True
-
-def btn_reset():
-    global points_new
-    global counter
-    global cleared
-    cleared = False
-    points_new = 0
-    counter = False
-
 while config != 3:
     config = 0
     try:
@@ -86,6 +61,32 @@ while config != 3:
         print('connected')
 
 
+def btn_plus():
+    global points_new
+    global counter
+    global cleared
+    cleared = False
+    points_new +=1
+    counter = True
+
+
+def btn_minus():
+    global points_new
+    global counter
+    global cleared
+    cleared = False
+    points_new-=10
+    counter = True
+
+
+def btn_reset():
+    global points_new
+    global counter
+    global cleared
+    cleared = False
+    points_new = 0
+    counter = False
+
 
 button1 = gpiozero.Button(btn1)
 button2 = gpiozero.Button(btn2)
@@ -96,7 +97,6 @@ button2.when_released = btn_minus
 button3.when_released = btn_reset
 
 
-
 class CardThread(threading.Thread):
     def __init__(self):
         super(CardThread, self).__init__()
@@ -104,12 +104,14 @@ class CardThread(threading.Thread):
         while True:
             global id
             id = reader.read_id()
-
-
-thread1 = CardThread()
-thread1.setDaemon(True)
-thread1.start()
-
+while thread_alive != True:
+    try:
+        thread1 = CardThread()
+        thread1.setDaemon(True)
+        thread1.start()
+        thread_alive = thread1.is_alive()
+    except:
+        print("thread exception")
 try:
     lcd.clear()
     while True:
