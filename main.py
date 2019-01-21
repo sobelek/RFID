@@ -14,7 +14,7 @@ btn1 = 16
 btn2 = 12
 btn3 = 1
 
-config = 0
+
 id = (None, None)
 points_new = 0
 counter = False
@@ -30,6 +30,7 @@ lcd_d4 = digitalio.DigitalInOut(board.D13)
 lcd_backlight = digitalio.DigitalInOut(board.D2)
 lcd_columns = 16
 lcd_rows    = 2
+config = 0
 while config != 3:
     config = 0
     try:
