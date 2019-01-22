@@ -121,9 +121,10 @@ try:
                 if cleared == False:
                     lcd.clear()
                     cleared = True
-                    
-                lcd.message = "Points +{}".format(points_new)
-                
+                if points_new > 0: 
+                    lcd.message = "Points +{}".format(points_new)
+                else:
+                    lcd.message = "Points {}".format(points_new)
                 if id != (None, None):
                     cursor.execute("select points,isActive from Users where cardId='{}'".format(id))
                     points, active = cursor.fetchone()
@@ -144,15 +145,17 @@ try:
                             break
                     else:
                         lcd.clear()
-                        lcd.message = "Card not Active"
+                        lcd.message = "Karta nie aktywna"
                         time.sleep(1.0)
                         counter = False
                         points_new = 0
                         break
             if id != (None, None):
                 cursor.execute("select points from Users where cardId='{}'".format(id))
-                points = cursor.fetchall()
-                id = None 
+                points = cursor.fetchone()
+                cursor.execute("select points from Users where cardId='{}'".format(id))
+                active = cursor.fetchone()
+                
                 if(not points):
                     cursor.execute("insert into Users (cardId) values ({})".format(id))
                     con.commit()
@@ -160,8 +163,14 @@ try:
                     lcd.message= "Dodano karte\nklienta"
                     print(cursor.rowcount,"Not in database, adding")
                     time.sleep(5.0)
+                    lcd.clear()
+                elif(points == (None,) and active == (None,)):
+                    lcd.clear()
+                    lcd.message = "Karta nie \naktywna"
+                    time.sleep(3.0)
+                    lcd.clear()
                 elif(points):
-                    points = points[0][0]
+                    points = points[0]
                     print(points)
                     lcd.clear()
                     lcd.message = 'Punkty:{}'.format(str(points))
