@@ -116,7 +116,7 @@ while thread_alive != True:
 try:
     lcd.clear()
     while True:
-            lcd.message = "Przyloz Karte"
+            lcd.message = "Przyloz Karte lub\nWprwoadz punkty"
             while counter == True:
                 if cleared == False:
                     lcd.clear()
@@ -153,8 +153,6 @@ try:
             if id != (None, None):
                 cursor.execute("select points from Users where cardId='{}'".format(id))
                 points = cursor.fetchone()
-                cursor.execute("select points from Users where cardId='{}'".format(id))
-                active = cursor.fetchone()
                 
                 if(not points):
                     cursor.execute("insert into Users (cardId) values ({})".format(id))
